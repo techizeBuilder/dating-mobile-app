@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "scheme": "DatingApp",
+    "version": "1.0.0",
+    "icon": "./assets/images/logo.png",
+    "splash": {
+      "image": "./assets/images/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "permissions": ["CAMERA", "AUDIO_RECORDING"],
+    "extra": {
+      "eas": {
+        "projectId": "9e3773fe-44bc-4e5e-bda3-7f50cbf53362"
+      }
+    },
+    "owner": "sahilsoni1618",
+    "plugins": ["expo-secure-store"],
+    "slug": "datingapp",
+    "android": {
+      "package": "dating.com",
+      "versionCode": 1,
+      "permissions": ["android.permission.RECORD_AUDIO"]
+    }
+  }
+}
