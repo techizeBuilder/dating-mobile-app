@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -40,79 +40,105 @@ export default function StoryViewer({
   const [activeIndex, setActiveIndex] = useState(currentIndex);
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [shouldClose, setShouldClose] = useState(false);
-  const [videoStatus, setVideoStatus] = useState<AVPlaybackStatus | null>(null);
+  const [storyCompleted, setStoryCompleted] = useState(false);
 
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const progressRef = useRef(0);
+
+  // Update refs when progress changes
+  useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
+
+  // Reset when modal opens or story changes
   useEffect(() => {
     if (visible) {
       setActiveIndex(currentIndex);
-      setProgress(0);
+      resetStory();
     }
   }, [visible, currentIndex]);
 
   useEffect(() => {
-    if (shouldClose) {
-      onClose();
-      setShouldClose(false);
-    }
-  }, [shouldClose, onClose]);
-
-  useEffect(() => {
-    setProgress(0);
-    setVideoStatus(null); // Reset video status when story changes
-    console.log("current story:", stories[activeIndex]);
+    resetStory();
   }, [activeIndex]);
 
+  const resetStory = () => {
+    setProgress(0);
+    setStoryCompleted(false);
+    progressRef.current = 0;
+    clearTimer();
+  };
+
+  const clearTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const moveToNextStory = useCallback(() => {
+    if (storyCompleted) return; // Prevent multiple calls
+
+    setStoryCompleted(true);
+    clearTimer();
+
+    if (activeIndex < stories.length - 1) {
+      setActiveIndex((prev) => prev + 1);
+    } else {
+      onClose();
+    }
+  }, [activeIndex, stories.length, onClose, storyCompleted]);
+
+  // Handle image stories with timer
   useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
+    if (!visible || isPaused || storyCompleted) return;
 
-    if (visible && !isPaused) {
-      const currentStory = stories[activeIndex];
-      const isVideo = currentStory?.mediaType === "video";
+    const currentStory = stories[activeIndex];
+    const isVideo = currentStory?.mediaType === "video";
 
-      if (isVideo && videoStatus?.isLoaded) {
-        // For videos, sync progress with actual playback
-        const currentTime = videoStatus.positionMillis || 0;
-        const duration = videoStatus.durationMillis || 1;
-        const videoProgress = currentTime / duration;
+    if (!isVideo) {
+      // Image story - 5 second timer
+      timerRef.current = setInterval(() => {
+        const newProgress = progressRef.current + 0.02;
 
-        setProgress(videoProgress);
-
-        // Check if video finished
-        if (videoProgress >= 0.99) {
-          if (activeIndex < stories.length - 1) {
-            setActiveIndex((prevIndex) => prevIndex + 1);
-          } else {
-            setShouldClose(true);
-          }
+        if (newProgress >= 1) {
+          setProgress(1);
+          moveToNextStory();
+        } else {
+          setProgress(newProgress);
         }
-      } else if (!isVideo) {
-        // For images, use timer-based progress (5 seconds)
-        timer = setInterval(() => {
-          setProgress((prev) => {
-            const newProgress = prev + 0.02; // 0.02 * 50 = 1 (5 seconds)
-            if (newProgress >= 1) {
-              if (activeIndex < stories.length - 1) {
-                setActiveIndex((prevIndex) => prevIndex + 1);
-                return 0;
-              } else {
-                setShouldClose(true);
-                return 1;
-              }
-            }
-            return newProgress;
-          });
-        }, 100); // Update every 100ms
-      }
+      }, 100);
     }
 
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [visible, activeIndex, isPaused, videoStatus]);
+    return clearTimer;
+  }, [visible, activeIndex, isPaused, storyCompleted, moveToNextStory]);
 
-  const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
-    setVideoStatus(status);
+  // Handle video playback status
+  const handleVideoStatusUpdate = (status: AVPlaybackStatus) => {
+    if (!status.isLoaded || storyCompleted) return;
+
+    const position = status.positionMillis || 0;
+    const duration = status.durationMillis || 1;
+    const videoProgress = Math.min(position / duration, 1);
+
+    setProgress(videoProgress);
+
+    // Check if video is near end
+    if (videoProgress >= 0.98) {
+      moveToNextStory();
+    }
+  };
+
+  const handlePrevious = () => {
+    if (activeIndex > 0 && !storyCompleted) {
+      setActiveIndex((prev) => prev - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (!storyCompleted) {
+      moveToNextStory();
+    }
   };
 
   if (!stories.length || !visible) return null;
@@ -121,19 +147,21 @@ export default function StoryViewer({
   const isCurrentVideo = currentStory?.mediaType === "video";
 
   return (
-    <Modal visible={visible} transparent animationType="fade" key={activeIndex}>
+    <Modal visible={visible} transparent animationType="fade">
       <View style={styles.container}>
         {isCurrentVideo ? (
           <Video
+            key={activeIndex} // Force remount on story change
             source={{ uri: currentStory?.imageUrl }}
             style={styles.media}
             resizeMode={ResizeMode.COVER}
-            shouldPlay={visible}
+            shouldPlay={!isPaused && visible && !storyCompleted}
             isLooping={false}
-            onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+            onPlaybackStatusUpdate={handleVideoStatusUpdate}
           />
         ) : (
           <Image
+            key={activeIndex}
             source={{ uri: currentStory?.imageUrl }}
             style={styles.media}
           />
@@ -187,19 +215,12 @@ export default function StoryViewer({
         </View>
 
         <View style={styles.navigationContainer} pointerEvents="box-none">
-          {/* Left tap area */}
           <Pressable
             style={[styles.navButton, { width: "33%" }]}
             pointerEvents="box-none"
-            onPress={() => {
-              if (activeIndex > 0) {
-                setActiveIndex(activeIndex - 1);
-                setProgress(0);
-              }
-            }}
+            onPress={handlePrevious}
           />
 
-          {/* Middle area - Pause on hold */}
           <Pressable
             style={[styles.navButton, { width: "34%" }]}
             pointerEvents="box-none"
@@ -207,18 +228,10 @@ export default function StoryViewer({
             onPressOut={() => setIsPaused(false)}
           />
 
-          {/* Right tap area */}
           <Pressable
             style={[styles.navButton, { width: "33%" }]}
             pointerEvents="box-none"
-            onPress={() => {
-              if (activeIndex < stories.length - 1) {
-                setActiveIndex(activeIndex + 1);
-                setProgress(0);
-              } else {
-                onClose();
-              }
-            }}
+            onPress={handleNext}
           />
         </View>
 
