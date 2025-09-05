@@ -71,14 +71,14 @@ export default function ExploreScreen() {
   const [expanded, setExpanded] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
-  const { token } = useUserProfile();
+  const { token, profile: MyProfile } = useUserProfile();
   const [loading, setLoading] = useState(false);
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const [uiFilters, setUiFilters] = useState<Filters>({
     location: "",
-    gender: "",
+    gender: MyProfile.interested_in,
     ageRange: [18, 60],
     distance: 50,
   });
@@ -86,11 +86,25 @@ export default function ExploreScreen() {
   // State for applied filters (what actually triggers API calls)
   const [appliedFilters, setAppliedFilters] = useState<Filters>({
     location: "",
-    gender: "",
+    gender: MyProfile.interested_in,
     ageRange: [18, 60],
     distance: 50,
   });
 
+  useEffect(() => {
+    setUiFilters({
+      location: "",
+      gender: MyProfile.interested_in,
+      ageRange: [18, 60],
+      distance: 50,
+    });
+    setAppliedFilters({
+      location: "",
+      gender: MyProfile.interested_in,
+      ageRange: [18, 60],
+      distance: 50,
+    });
+  }, [MyProfile]);
 
   // Fetch matches when appliedFilters change
   useEffect(() => {
@@ -101,9 +115,11 @@ export default function ExploreScreen() {
           age_min: appliedFilters.ageRange[0]?.toString() || "18",
           age_max: appliedFilters.ageRange[1]?.toString() || "100",
           city: appliedFilters.location || "",
-          gender: appliedFilters.gender || "",
+          // gender: appliedFilters.gender || "",
           distance: appliedFilters.distance.toString(),
         });
+        console.log("MyProfile : ", MyProfile);
+        console.log("query : ", query.toString());
 
         const response = await axios.get(
           `${API_BASE_URL}/user/matches?${query.toString()}`,
@@ -114,7 +130,7 @@ export default function ExploreScreen() {
           }
         );
 
-        // console.log("Response from matches: ", response);
+        console.log("Response from matches: ", response);
 
         const formatted = response.data.matches.map((m: any) => ({
           id: m.id,
@@ -133,6 +149,7 @@ export default function ExploreScreen() {
         }));
 
         setProfiles(formatted);
+        console.log("Fetched matches:", formatted);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching matches:", error);
@@ -145,6 +162,7 @@ export default function ExploreScreen() {
 
   const handleApplyFilters = () => {
     setAppliedFilters(uiFilters);
+    setShowFilter(false);
   };
 
   const handleResetFilters = () => {
@@ -157,7 +175,6 @@ export default function ExploreScreen() {
     setUiFilters(defaultFilters);
     setAppliedFilters(defaultFilters);
   };
-
 
   const profile = profiles[currentIndex] || {
     id: "",
@@ -180,36 +197,33 @@ export default function ExploreScreen() {
 
   const nextProfile = async () => {
     console.log("Attempting next profile. Current index:", currentIndex);
+    console.log("profiles:", profiles);
 
     if (profiles.length === 0) return;
 
-    let nextIdx = currentIndex + 1;
+    const updatedProfiles = [...profiles];
+    updatedProfiles.splice(currentIndex, 1);
 
-    // 🔁 Loop back to start if at end
-    if (nextIdx >= profiles.length) {
-      nextIdx = 0;
-      // Toast.show({
-      //   type: "info",
-      //   text1: "Back to start",
-      //   text2: "Revisiting profiles",
-      // });
-      console.log("Preloading the repeat profile");
+    if (updatedProfiles.length > 0) {
+      const nextIdx = currentIndex >= updatedProfiles.length ? 0 : currentIndex;
+
+      const nextImage = updatedProfiles[nextIdx].image;
+      try {
+        console.log("Preloading next profile image");
+        await preloadImage(nextImage);
+        console.log("Image preloaded successfully");
+      } catch (e) {
+        console.warn("Failed to preload image:", e);
+      }
+
+      setProfiles(updatedProfiles);
+      setCurrentIndex(nextIdx);
+      translateX.value = 0;
+      translateY.value = 0;
+    } else {
+      setProfiles([]);
+      setCurrentIndex(0);
     }
-
-    const nextImage = profiles[nextIdx].image;
-
-    try {
-      console.log("Preloading next profile image");
-      await preloadImage(nextImage);
-      console.log("Image preloaded successfully");
-    } catch (e) {
-      console.warn("Failed to preload image:", e);
-    }
-
-    console.log("Updating to next profile:", nextIdx);
-    translateX.value = 0;
-    translateY.value = 0;
-    setCurrentIndex(nextIdx);
   };
 
   const gesture = Gesture.Pan()
@@ -414,13 +428,13 @@ export default function ExploreScreen() {
               </Pressable>
             </Animated.View>
           </GestureDetector>
-        ) : <View>
-          <Text style={{ color: "#fff" }}>
-            No more matches! Try adjusting filters.
-          </Text>
-        </View>
-        }
-
+        ) : (
+          <View>
+            <Text style={{ color: "#fff" }}>
+              No more matches! Try adjusting filters.
+            </Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.actions}>
@@ -585,7 +599,7 @@ export default function ExploreScreen() {
                     style={styles.pressableWrapper}
                   >
                     <LinearGradient
-                      colors={['#FF00FF', '#8A2BE2']}
+                      colors={["#FF00FF", "#8A2BE2"]}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
                       style={styles.applyButton}
@@ -741,9 +755,9 @@ const styles = StyleSheet.create({
   },
   questionMark: {
     fontSize: 30,
-    color: '#00FFFF',
-    fontWeight: 'bold',
-    fontFamily: 'Rajdhani-SemiBold',
+    color: "#00FFFF",
+    fontWeight: "bold",
+    fontFamily: "Rajdhani-SemiBold",
   },
 
   vibeButton: {

@@ -1,101 +1,116 @@
-import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, Image, ScrollView, FlatList } from 'react-native';
-import { router } from 'expo-router';
-import { ArrowLeft, Camera, MapPin, Plus, ChevronRight } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { API_BASE_URL } from '../apiUrl';
-import { useUserProfile } from '../context/userContext';
-import Toast from 'react-native-toast-message';
-import GradientInput from '@/components/GradientInput';
-import SelectInput from '@/components/SelectInput';
-import MultipleSelectInput from '@/components/MultiSelectInput';
-import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
-import Loading from '@/components/Loading';
+import { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Pressable,
+  Image,
+  ScrollView,
+  FlatList,
+  Alert,
+  TouchableOpacity,
+  Modal,
+} from "react-native";
+import { router } from "expo-router";
+import {
+  ArrowLeft,
+  Camera,
+  MapPin,
+  Plus,
+  ChevronRight,
+} from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { API_BASE_URL } from "../apiUrl";
+import { useUserProfile } from "../context/userContext";
+import Toast from "react-native-toast-message";
+import GradientInput from "@/components/GradientInput";
+import SelectInput from "@/components/SelectInput";
+import MultipleSelectInput from "@/components/MultiSelectInput";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+import Loading from "@/components/Loading";
 
 export default function EditProfileScreen() {
   const { token, user, setUser, loading, setLoading } = useUserProfile();
-  const [updating, setUpdating] = useState(false)
+  const [updating, setUpdating] = useState(false);
   const [interests, setInterests] = useState([]);
+  const [imageOptionsVisible, setImageOptionsVisible] = useState(false);
   useEffect(() => {
     const fetchAndStoreInterests = async () => {
       try {
-
         const response = await fetch(`${API_BASE_URL}/interests`);
         const data = await response.json();
-        console.log('Response:', data);
+        console.log("Response:", data);
         setInterests(data.interests || []);
-        setLoading(false)
+        setLoading(false);
       } catch (error) {
-        console.error('Error fetching interests:', error);
-        setLoading(false)
+        console.error("Error fetching interests:", error);
+        setLoading(false);
       }
     };
 
     fetchAndStoreInterests();
   }, []);
 
-
   const [profile, setProfile] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    about: '',
-    age: '',
-    gender: '',
-    genderPreference: '',
-    profession: '',
-    marital_status: '',
+    name: "",
+    email: "",
+    phone: "",
+    about: "",
+    age: "",
+    gender: "",
+    genderPreference: "",
+    profession: "",
+    marital_status: "",
 
-    height: '',
-    weight: '',
-    skin_color: '',
-    category: '',
+    height: "",
+    weight: "",
+    skin_color: "",
+    category: "",
     likes: [],
     interests: [],
     hobbies: [],
     address: {
-      country: '',
-      state: '',
-      city: '',
-      pincode: '',
-      locality: '',
+      country: "",
+      state: "",
+      city: "",
+      pincode: "",
+      locality: "",
     },
-    profileImage: '',
+    profileImage: "",
   });
 
-  console.log("profile update formdta : ", profile)
-  console.log("user in edit form : ", user
-
-  )
+  console.log("profile update formdta : ", profile);
+  console.log("user in edit form : ", user);
   // Load user profile data if available
   useEffect(() => {
     if (user) {
       setProfile({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.mobile || '',
-        about: user.about || '',
-        age: user.age ? String(user.age) : '',
-        gender: user.i_am || user.gender || '',
-        genderPreference: user.interested_in || user.genderPreference || '',
-        profession: user.profession || '',
-        marital_status: user.marital_status || '',
-        height: user.height ? String(user.height) : '',
-        weight: user.weight ? String(user.weight) : '',
-        skin_color: user.skin_color || '',
-        category: user.category || '',
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.mobile || "",
+        about: user.about || "",
+        age: user.age ? String(user.age) : "",
+        gender: user.i_am || user.gender || "",
+        genderPreference: user.interested_in || user.genderPreference || "",
+        profession: user.profession || "",
+        marital_status: user.marital_status || "",
+        height: user.height ? String(user.height) : "",
+        weight: user.weight ? String(user.weight) : "",
+        skin_color: user.skin_color || "",
+        category: user.category || "",
         likes: user.likes || [],
         interests: user.interests || [],
         hobbies: user.hobbies || [],
         address: {
-          country: user.address?.country || '',
-          state: user.address?.state || '',
-          city: user.address?.city || '',
-          pincode: user.address?.pincode || '',
-          locality: user.address?.locality || '',
+          country: user.address?.country || "",
+          state: user.address?.state || "",
+          city: user.address?.city || "",
+          pincode: user.address?.pincode || "",
+          locality: user.address?.locality || "",
         },
-        profileImage: user.profile_image || '',
+        profileImage: user.profile_image || "",
       });
     }
   }, [user]);
@@ -112,63 +127,85 @@ export default function EditProfileScreen() {
     }
   };
 
+  const takePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        "Permission Denied",
+        "Camera access is required to take a photo."
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setProfile({ ...profile, profileImage: result.assets[0].uri });
+    }
+  };
+
+  // When pressing camera icon → show options
+  const handleImageOption = () => {
+    setImageOptionsVisible(true);
+  };
+
   const parseCommaSeparated = (text: string): string[] =>
     text
       .split(",")
       .map((item) => item.trim())
       .filter((item) => item.length > 0);
 
-
-
   const handleUpdateProfile = async () => {
     try {
-      setUpdating(true)
+      setUpdating(true);
       const cleanedLikes = parseCommaSeparated(profile.likes.join(","));
       const cleanedHobbies = parseCommaSeparated(profile.hobbies.join(","));
       const formData = new FormData();
 
-      formData.append('name', profile.name);
-      formData.append('email', profile.email);
-      formData.append('mobile', profile.phone);
-      formData.append('i_am', profile.gender);
-      formData.append('interested_in', profile.genderPreference);
-      formData.append('age', profile.age);
-      formData.append('about', profile.about);
+      formData.append("name", profile.name);
+      formData.append("email", profile.email);
+      formData.append("mobile", profile.phone);
+      formData.append("i_am", profile.gender);
+      formData.append("interested_in", profile.genderPreference);
+      formData.append("age", profile.age);
+      formData.append("about", profile.about);
       // formData.append("likes", JSON.stringify(profile.likes));
       // formData.append("hobbies", JSON.stringify(profile.hobbies));
       formData.append("hobbies", JSON.stringify(cleanedHobbies));
       formData.append("likes", JSON.stringify(cleanedLikes));
       formData.append("interests", JSON.stringify(profile.interests));
-      formData.append('skin_color', profile.skin_color);
-      formData.append('height', profile.height);
-      formData.append('weight', profile.weight);
-      formData.append('profession', profile.profession);
-      formData.append('marital_status', profile.marital_status);
-      formData.append('category', profile.category);
-      formData.append('address', JSON.stringify(profile.address));
+      formData.append("skin_color", profile.skin_color);
+      formData.append("height", profile.height);
+      formData.append("weight", profile.weight);
+      formData.append("profession", profile.profession);
+      formData.append("marital_status", profile.marital_status);
+      formData.append("category", profile.category);
+      formData.append("address", JSON.stringify(profile.address));
 
       // Attach profile image if present and is a local file
       const fileUri = profile.profileImage;
-      if (fileUri && fileUri.startsWith('file://')) {
+      if (fileUri && fileUri.startsWith("file://")) {
         const fileInfo = await FileSystem.getInfoAsync(fileUri);
         if (fileInfo.exists) {
-          formData.append('profile_image', {
+          formData.append("profile_image", {
             uri: fileInfo.uri,
             name: `profile.jpg`,
-            type: 'image/jpeg',
+            type: "image/jpeg",
           });
         }
       }
 
       for (let pair of formData.entries()) {
-        console.log(pair[0] + ':', pair[1]);
+        console.log(pair[0] + ":", pair[1]);
       }
 
       const response = await fetch(`${API_BASE_URL}/user/profile/update`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Authorization': `Bearer ${token}`,
-
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
@@ -177,37 +214,37 @@ export default function EditProfileScreen() {
 
       if (response.ok && data.status) {
         Toast.show({
-          type: 'success',
-          text1: 'Profile Updated',
+          type: "success",
+          text1: "Profile Updated",
         });
 
         setUser(data.data);
         router.push("/(tabs)/profile");
       } else {
         Toast.show({
-          type: 'error',
-          text1: 'Update Failed',
-          text2: data.message || 'Something went wrong',
+          type: "error",
+          text1: "Update Failed",
+          text2: data.message || "Something went wrong",
         });
       }
-      setUpdating(false)
+      setUpdating(false);
     } catch (err) {
-      console.error('Update Error:', err);
-      setUpdating(false)
+      console.error("Update Error:", err);
+      setUpdating(false);
       Toast.show({
-        type: 'error',
-        text1: 'Network Error',
-        text2: 'Try again later',
+        type: "error",
+        text1: "Network Error",
+        text2: "Try again later",
       });
     }
   };
 
   const handleInterestsChange = (selectedItems: any[]) => {
     const idsOnly = selectedItems
-      .map(item => {
+      .map((item) => {
         if (!item) return null;
-        if (typeof item === 'string') return item;
-        if (typeof item === 'object' && item.value) return item.value;
+        if (typeof item === "string") return item;
+        if (typeof item === "object" && item.value) return item.value;
         return null;
       })
       .filter(Boolean);
@@ -216,15 +253,16 @@ export default function EditProfileScreen() {
   };
 
   if (loading) {
-    return (
-      <Loading />
-    )
+    return <Loading />;
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.push('/profile')} style={styles.backButton}>
+        <Pressable
+          onPress={() => router.push("/profile")}
+          style={styles.backButton}
+        >
           <ArrowLeft size={24} color="#FF00FF" />
         </Pressable>
         <Text style={styles.title}>Edit Profile</Text>
@@ -232,7 +270,7 @@ export default function EditProfileScreen() {
 
       <FlatList
         data={[]}
-        keyExtractor={() => 'dummy'}
+        keyExtractor={() => "dummy"}
         renderItem={null}
         showsVerticalScrollIndicator={false}
         style={styles.content}
@@ -242,16 +280,22 @@ export default function EditProfileScreen() {
               <Image
                 source={{
                   uri:
-                    profile.profileImage?.startsWith("file://") || profile.profileImage?.startsWith("http")
+                    profile.profileImage?.startsWith("file://") ||
+                    profile.profileImage?.startsWith("http")
                       ? profile.profileImage
-                      : user?.profile_image?.startsWith("http:/") && !user?.profile_image?.startsWith("http://")
-                        ? user.profile_image.replace("http:/", "http://")
-                        : user?.profile_image || "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&auto=format&fit=crop",
+                      : user?.profile_image?.startsWith("http:/") &&
+                        !user?.profile_image?.startsWith("http://")
+                      ? user.profile_image.replace("http:/", "http://")
+                      : user?.profile_image ||
+                        "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&auto=format&fit=crop",
                 }}
                 style={styles.avatar}
               />
 
-              <Pressable style={styles.cameraButton} onPress={pickImage}>
+              <Pressable
+                style={styles.cameraButton}
+                onPress={handleImageOption}
+              >
                 <Camera size={20} color="#00ffff" />
               </Pressable>
             </View>
@@ -263,7 +307,9 @@ export default function EditProfileScreen() {
                   <TextInput
                     style={styles.inputInner}
                     value={profile.name}
-                    onChangeText={(text) => setProfile({ ...profile, name: text })}
+                    onChangeText={(text) =>
+                      setProfile({ ...profile, name: text })
+                    }
                     placeholder="Enter your name"
                     placeholderTextColor="#666"
                   />
@@ -276,7 +322,9 @@ export default function EditProfileScreen() {
                   <TextInput
                     style={styles.inputInner}
                     value={profile.email}
-                    onChangeText={(text) => setProfile({ ...profile, email: text })}
+                    onChangeText={(text) =>
+                      setProfile({ ...profile, email: text })
+                    }
                     keyboardType="email-address"
                     placeholder="Enter your email"
                     placeholderTextColor="#666"
@@ -290,7 +338,9 @@ export default function EditProfileScreen() {
                   <TextInput
                     style={styles.inputInner}
                     value={profile.phone}
-                    onChangeText={(text) => setProfile({ ...profile, phone: text })}
+                    onChangeText={(text) =>
+                      setProfile({ ...profile, phone: text })
+                    }
                     keyboardType="phone-pad"
                     placeholder="Enter your phone"
                     placeholderTextColor="#666"
@@ -302,11 +352,13 @@ export default function EditProfileScreen() {
                 <SelectInput
                   label="Gender"
                   value={profile.gender}
-                  onValueChange={(val) => setProfile({ ...profile, gender: val })}
+                  onValueChange={(val) =>
+                    setProfile({ ...profile, gender: val })
+                  }
                   items={[
-                    { label: 'Male', value: 'Male' },
-                    { label: 'Female', value: 'Female' },
-                    { label: 'Other', value: 'Other' }
+                    { label: "Male", value: "Male" },
+                    { label: "Female", value: "Female" },
+                    { label: "Other", value: "Other" },
                   ]}
                   placeholder="Select Gender"
                 />
@@ -314,11 +366,13 @@ export default function EditProfileScreen() {
                 <SelectInput
                   label="Gender Preference"
                   value={profile.genderPreference}
-                  onValueChange={(val) => setProfile({ ...profile, genderPreference: val })}
+                  onValueChange={(val) =>
+                    setProfile({ ...profile, genderPreference: val })
+                  }
                   items={[
-                    { label: 'Male', value: 'Male' },
-                    { label: 'Female', value: 'Female' },
-                    { label: 'Both', value: 'Both' }
+                    { label: "Male", value: "Male" },
+                    { label: "Female", value: "Female" },
+                    { label: "Both", value: "Both" },
                   ]}
                   placeholder="Select Gender Preference"
                 />
@@ -331,7 +385,9 @@ export default function EditProfileScreen() {
                     <TextInput
                       style={styles.inputInner}
                       value={String(profile.height)}
-                      onChangeText={(text) => setProfile({ ...profile, height: Number(text) })}
+                      onChangeText={(text) =>
+                        setProfile({ ...profile, height: Number(text) })
+                      }
                       keyboardType="numeric"
                       placeholder="150"
                       placeholderTextColor="#666"
@@ -344,7 +400,9 @@ export default function EditProfileScreen() {
                     <TextInput
                       style={styles.inputInner}
                       value={String(profile.weight)}
-                      onChangeText={(text) => setProfile({ ...profile, weight: Number(text) })}
+                      onChangeText={(text) =>
+                        setProfile({ ...profile, weight: Number(text) })
+                      }
                       keyboardType="numeric"
                       placeholder="65"
                       placeholderTextColor="#666"
@@ -359,7 +417,9 @@ export default function EditProfileScreen() {
                   <TextInput
                     style={styles.inputInner}
                     value={profile.skin_color}
-                    onChangeText={(text) => setProfile({ ...profile, skin_color: text })}
+                    onChangeText={(text) =>
+                      setProfile({ ...profile, skin_color: text })
+                    }
                     placeholderTextColor="#666"
                     placeholder="Fair, Wheatish, Dark"
                   />
@@ -381,15 +441,16 @@ export default function EditProfileScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-
                 <SelectInput
                   label="Marital Status"
                   value={profile.marital_status}
-                  onValueChange={(val) => setProfile({ ...profile, marital_status: val })}
+                  onValueChange={(val) =>
+                    setProfile({ ...profile, marital_status: val })
+                  }
                   items={[
-                    { label: 'Married', value: 'married' },
-                    { label: 'Unmarried', value: 'unmarried' },
-                    { label: 'Widow', value: 'widow' }
+                    { label: "Married", value: "married" },
+                    { label: "Unmarried", value: "unmarried" },
+                    { label: "Widow", value: "widow" },
                   ]}
                   placeholder="Select Marital Status"
                 />
@@ -402,7 +463,10 @@ export default function EditProfileScreen() {
                     style={styles.inputInner}
                     value={profile.address.country}
                     onChangeText={(text) =>
-                      setProfile({ ...profile, address: { ...profile.address, country: text } })
+                      setProfile({
+                        ...profile,
+                        address: { ...profile.address, country: text },
+                      })
                     }
                     placeholder="India"
                     placeholderTextColor="#666"
@@ -417,7 +481,10 @@ export default function EditProfileScreen() {
                     style={styles.inputInner}
                     value={profile.address.state}
                     onChangeText={(text) =>
-                      setProfile({ ...profile, address: { ...profile.address, state: text } })
+                      setProfile({
+                        ...profile,
+                        address: { ...profile.address, state: text },
+                      })
                     }
                     placeholder="Gujarat"
                     placeholderTextColor="#666"
@@ -432,7 +499,10 @@ export default function EditProfileScreen() {
                     style={styles.inputInner}
                     value={profile.address.city}
                     onChangeText={(text) =>
-                      setProfile({ ...profile, address: { ...profile.address, city: text } })
+                      setProfile({
+                        ...profile,
+                        address: { ...profile.address, city: text },
+                      })
                     }
                     placeholder="Surat"
                     placeholderTextColor="#666"
@@ -441,21 +511,23 @@ export default function EditProfileScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-
                 <SelectInput
-
                   label="Category"
                   value={profile.category}
-                  onValueChange={(val) => setProfile({ ...profile, category: val })}
+                  onValueChange={(val) =>
+                    setProfile({ ...profile, category: val })
+                  }
                   items={[
-                    { label: 'Casual Dating', value: 'Casual Dating' },
-                    { label: 'Serious Relationship', value: 'Serious Relationship' },
-                    { label: 'Friendship', value: 'Friendship' }
+                    { label: "Casual Dating", value: "Casual Dating" },
+                    {
+                      label: "Serious Relationship",
+                      value: "Serious Relationship",
+                    },
+                    { label: "Friendship", value: "Friendship" },
                   ]}
                   placeholder="Select Category"
                 />
               </View>
-
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>About</Text>
@@ -463,7 +535,9 @@ export default function EditProfileScreen() {
                   <TextInput
                     style={[styles.inputInner, styles.textArea]}
                     value={profile.about}
-                    onChangeText={(text) => setProfile({ ...profile, about: text })}
+                    onChangeText={(text) =>
+                      setProfile({ ...profile, about: text })
+                    }
                     multiline
                     numberOfLines={4}
                     placeholder="About yourself"
@@ -477,9 +551,12 @@ export default function EditProfileScreen() {
                 <GradientInput>
                   <TextInput
                     style={styles.inputInner}
-                    value={profile.likes?.join(', ')}
+                    value={profile.likes?.join(", ")}
                     onChangeText={(text) =>
-                      setProfile({ ...profile, likes: text.split(',').map(item => item.trim()) })
+                      setProfile({
+                        ...profile,
+                        likes: text.split(",").map((item) => item.trim()),
+                      })
                     }
                     placeholder="Movies, Travel"
                     placeholderTextColor="#666"
@@ -488,10 +565,11 @@ export default function EditProfileScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-
                 <MultipleSelectInput
                   label="Interests"
-                  value={profile.interests.map((i) => (typeof i === 'string' ? i : i._id))}
+                  value={profile.interests.map((i) =>
+                    typeof i === "string" ? i : i._id
+                  )}
                   onValueChange={handleInterestsChange}
                   items={interests.map((interest) => ({
                     label: interest.name,
@@ -499,7 +577,6 @@ export default function EditProfileScreen() {
                   }))}
                   placeholder="Select Interests"
                 />
-
               </View>
 
               <View style={styles.inputGroup}>
@@ -507,9 +584,12 @@ export default function EditProfileScreen() {
                 <GradientInput>
                   <TextInput
                     style={styles.inputInner}
-                    value={profile.hobbies?.join(', ')}
+                    value={profile.hobbies?.join(", ")}
                     onChangeText={(text) =>
-                      setProfile({ ...profile, hobbies: text.split(',').map(item => item.trim()) })
+                      setProfile({
+                        ...profile,
+                        hobbies: text.split(",").map((item) => item.trim()),
+                      })
                     }
                     placeholder="Reading, Dancing"
                     placeholderTextColor="#666"
@@ -522,30 +602,141 @@ export default function EditProfileScreen() {
       />
 
       <View style={styles.footer}>
-        <Pressable disabled={updating} onPress={handleUpdateProfile} style={styles.updateWrapper}>
+        <Pressable
+          disabled={updating}
+          onPress={handleUpdateProfile}
+          style={styles.updateWrapper}
+        >
           <LinearGradient
-            colors={['#FF00FF', '#8A2BE2']}
+            colors={["#FF00FF", "#8A2BE2"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.updateButton}
           >
-            <Text style={styles.updateButtonText}>{updating ? "Updating..." : "Update"}</Text>
+            <Text style={styles.updateButtonText}>
+              {updating ? "Updating..." : "Update"}
+            </Text>
           </LinearGradient>
         </Pressable>
       </View>
+      <Modal
+        transparent
+        visible={imageOptionsVisible}
+        animationType="slide"
+        onRequestClose={() => setImageOptionsVisible(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "flex-end",
+            backgroundColor: "rgba(0,0,0,0.6)",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#111",
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              padding: 20,
+              borderWidth: 1,
+              borderColor: "#FF00FF",
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: "Orbitron-Bold",
+                fontSize: 18,
+                color: "#FF00FF",
+                marginBottom: 20,
+                textAlign: "center",
+              }}
+            >
+              Upload Photo
+            </Text>
 
-    </View >
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#000",
+                borderWidth: 1,
+                borderColor: "#00ffff",
+                borderRadius: 12,
+                padding: 12,
+                marginBottom: 12,
+              }}
+              onPress={() => {
+                setImageOptionsVisible(false);
+                takePhoto();
+              }}
+            >
+              <Text
+                style={{
+                  color: "#00ffff",
+                  textAlign: "center",
+                  fontFamily: "Rajdhani-SemiBold",
+                }}
+              >
+                Take Photo
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#000",
+                borderWidth: 1,
+                borderColor: "#FF00FF",
+                borderRadius: 12,
+                padding: 12,
+                marginBottom: 12,
+              }}
+              onPress={() => {
+                setImageOptionsVisible(false);
+                pickImage();
+              }}
+            >
+              <Text
+                style={{
+                  color: "#FF00FF",
+                  textAlign: "center",
+                  fontFamily: "Rajdhani-SemiBold",
+                }}
+              >
+                Choose from Gallery
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#222",
+                borderRadius: 12,
+                padding: 12,
+              }}
+              onPress={() => setImageOptionsVisible(false)}
+            >
+              <Text
+                style={{
+                  color: "#FFF",
+                  textAlign: "center",
+                  fontFamily: "Rajdhani-SemiBold",
+                }}
+              >
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: "#000000",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 20,
@@ -554,13 +745,13 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   title: {
-    fontFamily: 'Orbitron-Bold',
+    fontFamily: "Orbitron-Bold",
     fontSize: 24,
-    color: '#FF00FF',
-    textShadowColor: '#FF00FF',
+    color: "#FF00FF",
+    textShadowColor: "#FF00FF",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
   },
@@ -568,7 +759,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatarSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
   },
   avatar: {
@@ -576,20 +767,20 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     borderWidth: 2,
-    borderColor: '#00ffff',
+    borderColor: "#00ffff",
   },
   cameraButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
-    right: '35%',
+    right: "35%",
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     borderWidth: 2,
-    borderColor: '#00ffff',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderColor: "#00ffff",
+    justifyContent: "center",
+    alignItems: "center",
   },
   form: {
     padding: 20,
@@ -598,128 +789,128 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   label: {
-    fontFamily: 'Rajdhani-SemiBold',
+    fontFamily: "Rajdhani-SemiBold",
     fontSize: 14,
-    color: '#FF00FF',
+    color: "#FF00FF",
     marginBottom: 8,
   },
   input: {
     height: 48,
-    backgroundColor: 'rgba(255, 0, 255, 0.1)',
+    backgroundColor: "rgba(255, 0, 255, 0.1)",
     borderWidth: 1,
-    borderColor: '#FF00FF',
+    borderColor: "#FF00FF",
     borderRadius: 24,
     paddingHorizontal: 16,
-    color: '#FFF',
-    fontFamily: 'Rajdhani',
+    color: "#FFF",
+    fontFamily: "Rajdhani",
   },
   textArea: {
     height: 100,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
     paddingTop: 12,
   },
   row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
   },
   selectInput: {
     height: 48,
-    backgroundColor: 'rgba(255, 0, 255, 0.1)',
+    backgroundColor: "rgba(255, 0, 255, 0.1)",
     borderWidth: 1,
-    borderColor: '#FF00FF',
+    borderColor: "#FF00FF",
     borderRadius: 24,
     paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   selectText: {
-    color: '#FFF',
-    fontFamily: 'Rajdhani',
+    color: "#FFF",
+    fontFamily: "Rajdhani",
   },
   locationInput: {
     height: 48,
-    backgroundColor: 'rgba(255, 0, 255, 0.1)',
+    backgroundColor: "rgba(255, 0, 255, 0.1)",
     borderWidth: 1,
-    borderColor: '#FF00FF',
+    borderColor: "#FF00FF",
     borderRadius: 24,
     paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   locationText: {
-    color: '#FFF',
-    fontFamily: 'Rajdhani',
+    color: "#FFF",
+    fontFamily: "Rajdhani",
     flex: 1,
   },
   sectionTitle: {
-    fontFamily: 'Rajdhani-SemiBold',
+    fontFamily: "Rajdhani-SemiBold",
     fontSize: 16,
-    color: '#FF00FF',
+    color: "#FF00FF",
     marginTop: 16,
     marginBottom: 8,
   },
   interestButton: {
     height: 48,
-    backgroundColor: 'rgba(255, 0, 255, 0.1)',
+    backgroundColor: "rgba(255, 0, 255, 0.1)",
     borderWidth: 1,
-    borderColor: '#FF00FF',
+    borderColor: "#FF00FF",
     borderRadius: 24,
     paddingHorizontal: 16,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    flexDirection: 'row',
+    justifyContent: "flex-end",
+    alignItems: "center",
+    flexDirection: "row",
   },
   photoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 12,
     marginTop: 24,
   },
   photoItem: {
-    width: '31%',
+    width: "31%",
     aspectRatio: 1,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#FF00FF',
+    borderColor: "#FF00FF",
   },
   addPhotoButton: {
-    width: '31%',
+    width: "31%",
     aspectRatio: 1,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#FF00FF',
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderColor: "#FF00FF",
+    borderStyle: "dashed",
+    justifyContent: "center",
+    alignItems: "center",
   },
   footer: {
     padding: 20,
   },
 
   updateWrapper: {
-    width: '100%',
+    width: "100%",
   },
 
   updateButton: {
     height: 48,
     borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#FF00FF',
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#FF00FF",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 10,
     elevation: 5,
-    width: '100%',
+    width: "100%",
   },
 
   updateButtonText: {
-    fontFamily: 'Rajdhani-SemiBold',
+    fontFamily: "Rajdhani-SemiBold",
     fontSize: 20,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   gradientBorder: {
     padding: 2,
@@ -728,18 +919,17 @@ const styles = StyleSheet.create({
   },
   inputInner: {
     height: 48,
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     borderRadius: 22,
     paddingHorizontal: 16,
-    color: '#FFF',
-    fontFamily: 'Rajdhani',
-    justifyContent: 'center',
+    color: "#FFF",
+    fontFamily: "Rajdhani",
+    justifyContent: "center",
   },
 
   textArea: {
     height: 100,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
     paddingTop: 12,
   },
-
 });

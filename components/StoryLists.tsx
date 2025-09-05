@@ -54,9 +54,7 @@ export default function StoryList() {
       const res = await axios.get(`${API_BASE_URL}/story/list`, {
         headers: {
           Authorization: `Bearer ${token}`,
-
         },
-
       });
 
       if (res.data.status) {
@@ -65,8 +63,9 @@ export default function StoryList() {
             const existing = acc.find((u) => u.id === story.user.id);
             const storyObj = {
               id: story.id,
-              imageUrl: story.media_url,
+              imageUrl: story.media_url, // This will contain both image and video URLs
               timestamp: story.created_at,
+              mediaType: story.media_type, // Add this line
             };
 
             if (existing) {
@@ -128,24 +127,26 @@ export default function StoryList() {
     }
   };
 
-  const handleStoryUpload = async (image: {
+  const handleStoryUpload = async (media: {
     uri: string;
     type: string;
     fileName: string;
+    mediaType: "image" | "video";
   }) => {
-    console.log("handleStoryUpload me image : ", image);
+    console.log("handleStoryUpload media:", media);
     try {
       const formData = new FormData();
 
       // Get MIME type using mime lib (optional but safer)
-      const mimeType = mime.getType(image.uri) || image.type;
+      const mimeType = mime.getType(media.uri) || media.type;
 
-      formData.append("media_type", "image");
+      // Set media_type based on the selected media
+      formData.append("media_type", media.mediaType);
 
       formData.append("media", {
-        uri: image.uri,
+        uri: media.uri,
         type: mimeType,
-        name: image.fileName,
+        name: media.fileName,
       } as any);
 
       const response = await axios.post(
@@ -155,7 +156,6 @@ export default function StoryList() {
           headers: {
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${token}`,
-
           },
         }
       );
@@ -168,7 +168,7 @@ export default function StoryList() {
 
         Toast.show({
           type: "success",
-          text1: "Story uploaded!",
+          text1: `${media.mediaType === "video" ? "Video" : "Photo"} uploaded!`,
           text2: "Your story has been posted successfully.",
           position: "top",
           visibilityTime: 2000,
@@ -183,7 +183,7 @@ export default function StoryList() {
           position: "top",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(
         "🚨 Error uploading story:",
         error.response?.data || error.message
