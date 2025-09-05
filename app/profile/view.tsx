@@ -6,6 +6,8 @@ import {
   Pressable,
   ScrollView,
   Modal,
+  Share,
+  Button,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import {
@@ -22,6 +24,8 @@ import { useUserProfile } from "../context/userContext";
 import axios from "axios";
 import Loading from "@/components/Loading";
 import { fixImageUrl } from "../utils/fixImageUrl";
+import * as Linking from "expo-linking";
+import Toast from "react-native-toast-message";
 
 export default function ViewProfileScreen() {
   const { id } = useLocalSearchParams();
@@ -58,12 +62,42 @@ export default function ViewProfileScreen() {
     fetchUserProfile();
   }, [id, token]);
 
-  const shareProfile = () => {
-    console.log("sharing profile");
+  const shareProfile = async () => {
+    try {
+      const url = Linking.createURL(`/profile/${id}`);
+      await Share.share({
+        message: `Check out this profile: ${url}`,
+      });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const blockProfile = () => {
+  const blockProfile = async () => {
     console.log("blocking profile");
+    try {
+      console.log({ token, id });
+      const response = await axios.post(
+        `${API_BASE_URL}/user/${id}/block`,
+        {}, // Request body (empty for this endpoint)
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        } // ✅ Headers are now in the config object
+      );
+
+      const data = response.data;
+      console.log("Block Profile Data: ", { data });
+
+      Toast.show({ type: "info", text1: "User blocked successfully" });
+
+      router.back();
+      setLoading(false);
+    } catch (error) {
+      console.error("Error blocking user:", JSON.stringify(error));
+      setLoading(false);
+    }
   };
   // const profile = profiles[id as keyof typeof profiles];
 

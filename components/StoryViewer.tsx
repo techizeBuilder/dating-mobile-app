@@ -125,16 +125,16 @@ export default function StoryViewer({
       <View style={styles.container}>
         {isCurrentVideo ? (
           <Video
-            source={{ uri: fixImageUrl(currentStory?.imageUrl) }}
+            source={{ uri: currentStory?.imageUrl }}
             style={styles.media}
             resizeMode={ResizeMode.COVER}
-            shouldPlay={!isPaused && visible}
+            shouldPlay={visible}
             isLooping={false}
             onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
           />
         ) : (
           <Image
-            source={{ uri: fixImageUrl(currentStory?.imageUrl) }}
+            source={{ uri: currentStory?.imageUrl }}
             style={styles.media}
           />
         )}
