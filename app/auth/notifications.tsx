@@ -1,14 +1,44 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Switch } from 'react-native';
-import { router } from 'expo-router';
-import { ArrowLeft, Bell } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Switch,
+  Alert,
+  Platform,
+} from "react-native";
+import { router } from "expo-router";
+import { ArrowLeft, Bell } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Notifications from "expo-notifications";
+import * as Device from "expo-device";
 
 export default function NotificationsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
+  const handleToggle = async (value: boolean) => {
+    console.log({ value });
+    setNotificationsEnabled(value);
+
+    if (value) {
+      console.log("Getting token");
+      const token = await registerForPushNotificationsAsync();
+      console.log("Token: ", { token });
+      if (token) {
+        console.log("Expo Push Token:", token);
+      } else {
+        Alert.alert(
+          "Permission denied",
+          "You need to enable notifications in settings."
+        );
+        setNotificationsEnabled(false);
+      }
+    }
+  };
+
   const handleContinue = () => {
-    router.push('/(tabs)');
+    router.push("/(tabs)");
   };
 
   return (
@@ -28,31 +58,23 @@ export default function NotificationsScreen() {
         <View style={styles.toggleContainer}>
           <Switch
             value={notificationsEnabled}
-            onValueChange={setNotificationsEnabled}
-            trackColor={{ false: '#333', true: '#FF00FF' }}
-            thumbColor={notificationsEnabled ? '#fff' : '#666'}
+            onValueChange={handleToggle}
+            trackColor={{ false: "#333", true: "#FF00FF" }}
+            thumbColor={notificationsEnabled ? "#fff" : "#666"}
           />
           <Text style={styles.toggleText}>
-            {notificationsEnabled ? 'Notifications enabled' : 'Enable notifications'}
+            {notificationsEnabled
+              ? "Notifications enabled"
+              : "Enable notifications"}
           </Text>
         </View>
 
-        <Pressable onPress={handleContinue} style={{ width: '100%' }}>
+        <Pressable onPress={handleContinue} style={{ width: "100%" }}>
           <LinearGradient
-            colors={['#FF00FF', '#8A2BE2']}
+            colors={["#FF00FF", "#8A2BE2"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={{
-              height: 48,
-              borderRadius: 28,
-              justifyContent: 'center',
-              alignItems: 'center',
-              shadowColor: '#FF00FF',
-              shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 0.5,
-              shadowRadius: 10,
-              elevation: 5,
-            }}
+            style={styles.gradientButton}
           >
             <Text style={styles.buttonText}>Continue</Text>
           </LinearGradient>
@@ -62,10 +84,67 @@ export default function NotificationsScreen() {
   );
 }
 
+async function registerForPushNotificationsAsync() {
+  console.log("Starting push token registration...");
+  let token;
+
+  if (!Device.isDevice) {
+    console.log("Not a physical device");
+    Alert.alert("Error", "Must use a physical device for push notifications.");
+    return null;
+  }
+
+  console.log("Device check passed");
+
+  // Create notification channel FIRST on Android
+  if (Platform.OS === "android") {
+    console.log("Setting up Android notification channel...");
+    await Notifications.setNotificationChannelAsync("default", {
+      name: "default",
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: "#FF231F7C",
+    });
+    console.log("Android notification channel created");
+  }
+
+  console.log("Getting current permissions...");
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  console.log("Current permission status:", existingStatus);
+
+  let finalStatus = existingStatus;
+
+  if (existingStatus !== "granted") {
+    console.log("Requesting permissions...");
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+    console.log("Permission request result:", status);
+  }
+
+  if (finalStatus !== "granted") {
+    console.log("Permission not granted, final status:", finalStatus);
+    return null;
+  }
+
+  console.log("Permission granted, getting push token...");
+  try {
+    const tokenData = await Notifications.getExpoPushTokenAsync({
+      projectId: "4eab7acb-9473-4482-b60c-31a1d9ab1937",
+    });
+    token = tokenData.data;
+    console.log("Successfully got push token:", token);
+  } catch (error) {
+    console.error("Error getting push token:", error);
+    return null;
+  }
+
+  return token;
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     padding: 24,
   },
   backButton: {
@@ -73,52 +152,50 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: -100,
   },
   title: {
-    fontFamily: 'Orbitron-Bold',
+    fontFamily: "Orbitron-Bold",
     fontSize: 28,
-    color: '#FF00FF',
+    color: "#FF00FF",
     marginTop: 24,
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   subtitle: {
-    fontFamily: 'Rajdhani',
+    fontFamily: "Rajdhani",
     fontSize: 18,
-    color: '#00FFFF',
+    color: "#00FFFF",
     marginBottom: 32,
-    textAlign: 'center',
+    textAlign: "center",
   },
   toggleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 16,
     marginBottom: 48,
   },
   toggleText: {
-    fontFamily: 'Rajdhani-SemiBold',
+    fontFamily: "Rajdhani-SemiBold",
     fontSize: 18,
-    color: '#FF00FF',
+    color: "#FF00FF",
   },
-  button: {
-    width: '100%',
-    height: 56,
-    backgroundColor: '#FF00FF',
+  gradientButton: {
+    height: 48,
     borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#FF00FF',
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#FF00FF",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 10,
     elevation: 5,
   },
   buttonText: {
-    fontFamily: 'Rajdhani-SemiBold',
+    fontFamily: "Rajdhani-SemiBold",
     fontSize: 18,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
 });

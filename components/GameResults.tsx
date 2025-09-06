@@ -39,7 +39,7 @@ export default function GameResults({ onClose }: GameResultsProps) {
   const [loading, setLoading] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
   const { width } = Dimensions.get("window");
-  const { socket } = useSocket()
+  const { socket } = useSocket();
   const {
     selectedMatch,
     setSelectedMatch,
@@ -54,7 +54,7 @@ export default function GameResults({ onClose }: GameResultsProps) {
     nextGameLevel,
   } = useGame();
 
-  const { showModal } = useModal()
+  const { showModal } = useModal();
 
   useEffect(() => {
     if (!socket || !gameStarted) return;
@@ -75,7 +75,7 @@ export default function GameResults({ onClose }: GameResultsProps) {
       if (gameLevel === 3) {
         // ✅ Level 3: silently reset and navigate
         // resetGame(socket, user?._id, disconnectedSessionId);
-        console.log("its level 3")
+        console.log("its level 3");
       } else {
         // ✅ Level 1 & 2: show modal
         showModal({
@@ -101,7 +101,6 @@ export default function GameResults({ onClose }: GameResultsProps) {
     };
   }, [socket, gameSessionId, gameStarted, gameLevel]);
 
-
   useEffect(() => {
     // Confetti timer - runs for 3 seconds
     const confettiTimer = setTimeout(() => {
@@ -122,6 +121,7 @@ export default function GameResults({ onClose }: GameResultsProps) {
       );
 
       const data = res.data;
+      console.log("Quiz Results: ", { data });
 
       if (data.status && data.results.length === 2) {
         const currentUserResult = data.results.find(
@@ -141,7 +141,6 @@ export default function GameResults({ onClose }: GameResultsProps) {
         setCompatibility(data.compatibility);
         setShared(data.shared || 0);
         setLoading(false);
-
       } else {
         console.log("Only one player finished. Retrying...", retryCount);
         setTimeout(() => getResults(retryCount + 1), 3000);
@@ -188,10 +187,11 @@ export default function GameResults({ onClose }: GameResultsProps) {
 
   return (
     <View style={styles.container}>
-
       {/* <ConfettiCannon count={200} origin={{ x: -10, y: -10 }} /> */}
-      <ScrollView style={{ marginTop: 40 }}
-        contentContainerStyle={styles.content}>
+      <ScrollView
+        style={{ marginTop: 40 }}
+        contentContainerStyle={styles.content}
+      >
         <Heart size={64} color="#FF00FF" strokeWidth={1.5} />
 
         <Text style={styles.title}>Stage Complete!</Text>
@@ -202,7 +202,7 @@ export default function GameResults({ onClose }: GameResultsProps) {
 
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{compatibility}%</Text>
+            <Text style={styles.statValue}>{compatibility || 0}%</Text>
             <Text style={styles.statLabel}>Compatibility</Text>
           </View>
 
@@ -211,11 +211,13 @@ export default function GameResults({ onClose }: GameResultsProps) {
             <Text style={styles.statLabel}>Shared Answers</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{results?.score}</Text>
+            <Text style={styles.statValue}>{results?.score || 0}</Text>
             <Text style={styles.statLabel}>Your Score</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{results?.answers?.length}</Text>
+            <Text style={styles.statValue}>
+              {results?.answers?.length || 10}
+            </Text>
             <Text style={styles.statLabel}>Questions</Text>
           </View>
         </View>
@@ -227,7 +229,7 @@ export default function GameResults({ onClose }: GameResultsProps) {
           </Text>
         </View>
 
-        {match && (
+        {compatibility >= 40 && match && (
           <View style={styles.buttonContainer}>
             <PlayGame
               match={{
@@ -254,8 +256,8 @@ export default function GameResults({ onClose }: GameResultsProps) {
             <Text style={styles.closeButtonText}>End Game</Text>
           </Pressable>
         </View>
-      </ScrollView >
-    </View >
+      </ScrollView>
+    </View>
   );
 }
 

@@ -291,12 +291,22 @@ export default function ExploreScreen() {
         );
 
         if (response.data.match) {
+          Toast.show({
+            type: "success",
+            text1: "💘 It's a Match!",
+            text2: `${profile.name} liked you back!`,
+          });
           console.log(
             "success",
             "💘 It's a Match!",
             `${profile.name} liked you back!`
           );
         } else {
+          Toast.show({
+            type: "info",
+            text1: "You sparked!",
+            text2: `You liked ${profile.name}`,
+          });
           console.log("info", "You sparked!", `You liked ${profile.name}`);
         }
 
@@ -314,14 +324,25 @@ export default function ExploreScreen() {
           { favouriteUserId: profile.id },
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        console.log({ data: response.data });
 
         if (response.data.success) {
+          Toast.show({
+            type: "success",
+            text1: "💘 It's a Match!",
+            text2: `${profile.name} liked you back!`,
+          });
           console.log(
             "success",
             "💘 It's a Match!",
             `${profile.name} liked you back!`
           );
         } else {
+          Toast.show({
+            type: "info",
+            text1: "You vibed!",
+            text2: `You added ${profile.name} to your favorites`,
+          });
           console.log(
             "info",
             "You vibed!",

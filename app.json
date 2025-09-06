@@ -9,18 +9,22 @@
       "backgroundColor": "#ffffff"
     },
     "permissions": ["CAMERA", "AUDIO_RECORDING"],
-    "extra": {
-      "eas": {
-        "projectId": "9e3773fe-44bc-4e5e-bda3-7f50cbf53362"
-      }
-    },
-    "owner": "sahilsoni1618",
-    "plugins": ["expo-secure-store"],
+    "owner": "utkarshh",
+    "plugins": ["expo-secure-store", "expo-notifications"],
     "slug": "datingapp",
     "android": {
       "package": "dating.com",
       "versionCode": 1,
-      "permissions": ["android.permission.RECORD_AUDIO"]
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "googleServicesFile": "./google-services.json"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "4eab7acb-9473-4482-b60c-31a1d9ab1937"
+      }
     }
   }
 }

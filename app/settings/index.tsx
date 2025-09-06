@@ -1,4 +1,11 @@
-import { View, Text, StyleSheet, Pressable, Modal, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Modal,
+  ScrollView,
+} from "react-native";
 import { useState } from "react";
 import { router } from "expo-router";
 import {
@@ -14,6 +21,7 @@ import {
   Subscript,
   Save,
   Heart,
+  Bell,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useUserProfile } from "../context/userContext";
@@ -79,6 +87,11 @@ export default function SettingsScreen() {
       route: "/settings/subscriptions",
     },
     {
+      icon: <Bell size={24} color="#79AA00" />,
+      title: "Notifications",
+      route: "/auth/notifications",
+    },
+    {
       icon: <LogOut size={24} color="#FF6B6B" />,
       title: "Logout",
       action: () => setShowLogoutModal(true),
@@ -109,7 +122,10 @@ export default function SettingsScreen() {
             >
               {item.icon}
               <Text
-                style={[styles.settingText, item.color && { color: item.color }]}
+                style={[
+                  styles.settingText,
+                  item.color && { color: item.color },
+                ]}
               >
                 {item.title}
               </Text>
@@ -136,7 +152,7 @@ export default function SettingsScreen() {
 
               <Pressable onPress={handleLogout} style={{ width: "50%" }}>
                 <LinearGradient
-                  colors={['#FF00FF', '#8A2BE2']}
+                  colors={["#FF00FF", "#8A2BE2"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={{
@@ -154,7 +170,7 @@ export default function SettingsScreen() {
                 >
                   <Text
                     style={{
-                      fontFamily: 'Rajdhani-SemiBold',
+                      fontFamily: "Rajdhani-SemiBold",
                       fontSize: 16,
                       color: "#FFFFFF",
                     }}
@@ -267,7 +283,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FF00FF",
   },
   cancelButtonText: {
-    fontFamily: 'Rajdhani-SemiBold',
+    fontFamily: "Rajdhani-SemiBold",
     fontSize: 16,
     color: "#00ffff",
   },
