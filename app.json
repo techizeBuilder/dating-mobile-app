@@ -8,9 +8,16 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "permissions": ["CAMERA", "AUDIO_RECORDING"],
+    "permissions": [
+      "CAMERA",
+      "AUDIO_RECORDING"
+    ],
     "owner": "utkarshh",
-    "plugins": ["expo-secure-store", "expo-notifications"],
+    "plugins": [
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-video"
+    ],
     "slug": "datingapp",
     "android": {
       "package": "dating.com",

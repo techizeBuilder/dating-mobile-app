@@ -8,6 +8,7 @@ import {
   Video as VideoIcon,
 } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
+import { VideoView, useVideoPlayer } from "expo-video";
 
 interface MediaAsset {
   uri: string;
@@ -28,6 +29,7 @@ export default function StoryUploader({
   onUpload,
 }: StoryUploaderProps) {
   const [selectedMedia, setSelectedMedia] = useState<MediaAsset | null>(null);
+  console.log({ selectedMedia });
 
   const handlePickMedia = async (
     useCamera: boolean,
@@ -98,6 +100,11 @@ export default function StoryUploader({
     }
   };
 
+  const player = useVideoPlayer(selectedMedia?.uri || "", (player) => {
+    player.loop = true;
+    player.play();
+  });
+
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.container}>
@@ -112,20 +119,34 @@ export default function StoryUploader({
           {selectedMedia ? (
             <View style={styles.previewContainer}>
               {selectedMedia.mediaType === "video" ? (
-                <Video
-                  source={{ uri: selectedMedia.uri }}
+                <VideoView
                   style={styles.preview}
-                  useNativeControls
-                  resizeMode={ResizeMode.COVER}
-                  isLooping
-                  shouldPlay
+                  player={player}
+                  allowsFullscreen
+                  allowsPictureInPicture
                 />
               ) : (
+                // <Video
+                //   source={{ uri: selectedMedia.uri }}
+                //   style={[styles.preview, { backgroundColor: "black" }]}
+                //   useNativeControls
+                //   resizeMode={ResizeMode.COVER}
+                //   isLooping
+                //   shouldPlay
+                //   isMuted={true} // Start muted to avoid autoplay issues
+                //   onLoadStart={() => console.log("Video loading started")}
+                //   onLoad={() => console.log("Video loaded")}
+                //   onError={(error) => console.log("Video error:", error)}
+                //   onReadyForDisplay={() =>
+                //     console.log("Video ready for display")
+                //   }
+                // />
                 <Image
                   source={{ uri: selectedMedia.uri }}
                   style={styles.preview}
                 />
               )}
+
               <Pressable style={styles.uploadButton} onPress={handleUpload}>
                 <Upload size={24} color="#000000" />
                 <Text style={styles.uploadButtonText}>Share Moment</Text>

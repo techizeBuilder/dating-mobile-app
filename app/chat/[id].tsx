@@ -466,11 +466,9 @@ export default function ChatScreen() {
             {msg.type === "text" ? (
               <Text style={styles.messageText}>{msg.message}</Text>
             ) : (
-              <TouchableOpacity
-                onPress={() => handleImagePress(fixImageUrl(msg.image))}
-              >
+              <TouchableOpacity onPress={() => handleImagePress(msg.image)}>
                 <Image
-                  source={{ uri: fixImageUrl(msg.image) }}
+                  source={{ uri: msg.image }}
                   style={styles.messageImage}
                 />
               </TouchableOpacity>
