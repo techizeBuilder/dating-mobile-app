@@ -98,14 +98,16 @@ async function registerForPushNotificationsAsync() {
 
   // Create notification channel FIRST on Android
   if (Platform.OS === "android") {
-    console.log("Setting up Android notification channel...");
     await Notifications.setNotificationChannelAsync("default", {
       name: "default",
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: "#FF231F7C",
+      showBadge: true,
+      enableLights: true,
+      enableVibrate: true,
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     });
-    console.log("Android notification channel created");
   }
 
   console.log("Getting current permissions...");

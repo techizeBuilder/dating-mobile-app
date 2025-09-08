@@ -174,12 +174,22 @@ export default function GameResults({ onClose }: GameResultsProps) {
     return `You completed ${currentStage}! Ready for ${nextStage}?`;
   };
 
-  if (loading && !results) {
+  if (loading ) {
     return (
       <View style={[styles.container, styles.centerContainer]}>
         <ActivityIndicator size="large" color="#FF00FF" />
         <Text style={styles.loadingText}>
           Waiting for the other player to finish...
+        </Text>
+      </View>
+    );
+  }
+
+  if (!results) {
+    return (
+      <View style={[styles.container, styles.centerContainer]}>
+        <Text style={styles.loadingText}>
+          No result found by the game session id
         </Text>
       </View>
     );

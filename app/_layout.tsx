@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import * as Notifications from "expo-notifications";
 import { useFrameworkReady } from "@/hooks/useFrameworkReady";
 import {
   useFonts,
@@ -25,17 +26,69 @@ import { ModalProvider } from "./context/modalContext";
 import GamePopupModal from "@/components/GameModal";
 import { GameProvider } from "./context/gameContext";
 
+// Configure notification behavior when app is in foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
 export default function RootLayout() {
   useFrameworkReady();
   const [showSplash, setShowSplash] = useState(true);
   const { incomingCall } = useCallStore();
 
+  // Notification listeners
+  const notificationListener = useRef<Notifications.EventSubscription | null>();
+  const responseListener = useRef<Notifications.EventSubscription | null>();
+ 
   const [fontsLoaded, fontError] = useFonts({
     Orbitron: Orbitron_400Regular,
     "Orbitron-Bold": Orbitron_700Bold,
     Rajdhani: Rajdhani_400Regular,
     "Rajdhani-SemiBold": Rajdhani_600SemiBold,
   });
+
+  // Set up notification listeners
+  useEffect(() => {
+    console.log("🔥 Setting up notification listeners...");
+
+    // Listen for notifications received while app is foregrounded
+    notificationListener.current =
+      Notifications.addNotificationReceivedListener((notification) => {
+        console.log("📱 NOTIFICATION RECEIVED!!!", notification);
+
+        // Force show an alert so we know it's working
+        alert("GOT NOTIFICATION: " + notification.request.content.title);
+
+        Toast.show({
+          type: "success",
+          text1: "Notification Received!",
+          text2: notification.request.content.body || "",
+        });
+      });
+
+    // Listen for when user taps a notification
+    responseListener.current =
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        console.log("👆 NOTIFICATION TAPPED!!!", response);
+        alert("TAPPED NOTIFICATION!");
+      });
+
+    // Cleanup function
+    return () => {
+      if (notificationListener.current) {
+        Notifications.removeNotificationSubscription(
+          notificationListener.current
+        );
+      }
+      if (responseListener.current) {
+        Notifications.removeNotificationSubscription(responseListener.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
