@@ -96,19 +96,27 @@ async function registerForPushNotificationsAsync() {
 
   console.log("Device check passed");
 
-  // Create notification channel FIRST on Android
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
       name: "default",
-      importance: Notifications.AndroidImportance.MAX,
+      importance: Notifications.AndroidImportance.HIGH, // Changed from MAX
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#FF231F7C",
-      showBadge: true,
-      enableLights: true,
-      enableVibrate: true,
-      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     });
   }
+
+  // // Create notification channel FIRST on Android
+  // if (Platform.OS === "android") {
+  //   await Notifications.setNotificationChannelAsync("default", {
+  //     name: "default",
+  //     importance: Notifications.AndroidImportance.MAX,
+  //     vibrationPattern: [0, 250, 250, 250],
+  //     lightColor: "#FF231F7C",
+  //     showBadge: true,
+  //     enableLights: true,
+  //     enableVibrate: true,
+  //     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+  //   });
+  // }
 
   console.log("Getting current permissions...");
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
