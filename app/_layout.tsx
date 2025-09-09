@@ -61,20 +61,20 @@ export default function RootLayout() {
         console.log("📱 NOTIFICATION RECEIVED!!!", notification);
 
         // Force show an alert so we know it's working
-        alert("GOT NOTIFICATION: " + notification.request.content.title);
+        // alert("GOT NOTIFICATION: " + notification.request.content.title);
 
-        Toast.show({
-          type: "success",
-          text1: "Notification Received!",
-          text2: notification.request.content.body || "",
-        });
+        // Toast.show({
+        //   type: "success",
+        //   text1: "Notification Received!",
+        //   text2: notification.request.content.body || "",
+        // });
       });
 
     // Listen for when user taps a notification
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         console.log("👆 NOTIFICATION TAPPED!!!", response);
-        alert("TAPPED NOTIFICATION!");
+        // alert("TAPPED NOTIFICATION!");
       });
 
     // Cleanup function

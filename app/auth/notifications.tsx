@@ -14,9 +14,13 @@ import { ArrowLeft, Bell } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
+import { useUserProfile } from "../context/userContext";
+import { savePushTokenToDatabase } from "@/helpers/savePushTokenToDatabase";
 
 export default function NotificationsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  const { token: authToken } = useUserProfile();
 
   const handleToggle = async (value: boolean) => {
     console.log({ value });
@@ -28,6 +32,9 @@ export default function NotificationsScreen() {
       console.log("Token: ", { token });
       if (token) {
         console.log("Expo Push Token:", token);
+
+        // Save in DB
+        savePushTokenToDatabase(token, authToken);
       } else {
         Alert.alert(
           "Permission denied",
