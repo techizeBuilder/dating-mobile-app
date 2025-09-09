@@ -1,6 +1,7 @@
 {
   "expo": {
-    "scheme": "DatingApp",
+    "name": "DatingApp",
+    "scheme": "datingapp",
     "version": "1.0.0",
     "icon": "./assets/images/logo.png",
     "splash": {
@@ -8,30 +9,17 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "permissions": [
-      "CAMERA",
-      "AUDIO_RECORDING"
-    ],
     "owner": "utkarshh",
-    "plugins": [
-      "expo-secure-store",
-      "expo-notifications",
-      "expo-video"
-    ],
+    "plugins": ["expo-secure-store", "expo-notifications", "expo-video"],
     "slug": "datingapp",
     "android": {
-      "package": "dating.com",
+      "package": "com.utkarshh.datingapp",
       "versionCode": 1,
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.POST_NOTIFICATIONS"
       ],
       "googleServicesFile": "./google-services.json"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "4eab7acb-9473-4482-b60c-31a1d9ab1937"
-      }
     }
   }
 }

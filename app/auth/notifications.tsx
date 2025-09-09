@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Constants from "expo-constants";
 import {
   View,
   Text,
@@ -139,7 +140,7 @@ async function registerForPushNotificationsAsync() {
   console.log("Permission granted, getting push token...");
   try {
     const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: "4eab7acb-9473-4482-b60c-31a1d9ab1937",
+      projectId: Constants.expoConfig?.extra?.eas.projectId,
     });
     token = tokenData.data;
     console.log("Successfully got push token:", token);
