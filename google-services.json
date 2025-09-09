@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1080730788181",
+    "project_id": "expopushnotifications-a7de7",
+    "storage_bucket": "expopushnotifications-a7de7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1080730788181:android:0225d9520540fb64f24fdc",
+        "android_client_info": {
+          "package_name": "com.utkarshh.datingapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCULXEN0WcgN3PklhSXEap33ODgxAYq8M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1080730788181:android:d7bf7bfc65b257abf24fdc",
+        "android_client_info": {
+          "package_name": "com.utkarshh.notificationtest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCULXEN0WcgN3PklhSXEap33ODgxAYq8M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

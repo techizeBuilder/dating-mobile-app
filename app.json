@@ -18,7 +18,13 @@
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.POST_NOTIFICATIONS"
-      ]
+      ],
+      "googleServicesFile": "./google-services.json"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "871078f0-71bf-4415-9e14-436ba701482b"
+      }
     }
   }
 }
