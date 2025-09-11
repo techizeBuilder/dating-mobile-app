@@ -25,14 +25,33 @@ import Incoming from "./incoming";
 import { ModalProvider } from "./context/modalContext";
 import GamePopupModal from "@/components/GameModal";
 import { GameProvider } from "./context/gameContext";
+import { getActiveChatPartner } from "./utils/notificationState";
 
 // Configure notification behavior when app is in foreground
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
+  handleNotification: async (notification) => {
+    try {
+      const data: any = notification?.request?.content?.data || {};
+      const type = data?.type;
+      const senderId = String(data?.senderId || "");
+      const activePartner = getActiveChatPartner();
+
+      const suppress =
+        type === "chat_message" && activePartner && senderId === activePartner;
+
+      return {
+        shouldShowAlert: !suppress,
+        shouldPlaySound: !suppress,
+        shouldSetBadge: !suppress,
+      };
+    } catch (e) {
+      return {
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      };
+    }
+  },
 });
 
 export default function RootLayout() {

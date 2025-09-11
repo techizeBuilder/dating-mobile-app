@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Modal,
   TouchableOpacity,
 } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import {
   ArrowLeft,
   Send,
@@ -29,6 +29,7 @@ import Loading from "@/components/Loading";
 import { useSocket } from "../context/socketContext";
 import { fixImageUrl } from "../utils/fixImageUrl";
 import FullImageModal from "@/components/FullImageModal";
+import { setActiveChatPartner } from "../utils/notificationState";
 
 interface Message {
   _id: string;
@@ -367,6 +368,26 @@ export default function ChatScreen() {
     setShowImageViewer(true);
     setSelectedImage(image);
   };
+
+  // Inform backend we're actively viewing this chat on focus; clear on blur
+  useFocusEffect(
+    useCallback(() => {
+      if (socket && id) {
+        try {
+          socket.emit("setActiveChat", id);
+          setActiveChatPartner(String(id));
+        } catch {}
+      }
+      return () => {
+        if (socket) {
+          try {
+            socket.emit("clearActiveChat");
+            setActiveChatPartner(null);
+          } catch {}
+        }
+      };
+    }, [socket, id])
+  );
 
   if (loading) {
     return <Loading />;

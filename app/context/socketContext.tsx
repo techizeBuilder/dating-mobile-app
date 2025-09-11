@@ -19,6 +19,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [socketError, setSocketError] = useState(null);
   const { setIncomingCall, setIncomingCallDetails, setIsUnlimitedCall } = useCallStore();
+  const activeChatPartnerRef = useRef<string | null>(null);
   useEffect(() => {
     if (!user || socketRef.current) return;
 
@@ -70,6 +71,9 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     return () => {
       if (socketRef.current) {
+        try {
+          socketRef.current.emit("clearActiveChat");
+        } catch {}
         socketRef.current.disconnect();
         console.log("Socket disconnected");
         socketRef.current = null;
